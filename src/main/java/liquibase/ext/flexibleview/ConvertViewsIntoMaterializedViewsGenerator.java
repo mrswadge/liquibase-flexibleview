@@ -3,6 +3,7 @@ package liquibase.ext.flexibleview;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -32,8 +33,26 @@ public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGener
 	}
 
 	public Sql[] generateSql( ConvertViewsIntoMaterializedViewsStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
+		String sql; 
+
+		List<Sql> sqlList = new ArrayList<Sql>();
+		RawSqlGenerator rawSqlGen = new RawSqlGenerator();
+		
+		sql = readSqlFile( "liquibase/ext/flexibleview/createViewDependencyGraphTempTable.sql" );
+		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+
+		sql = readSqlFile( "liquibase/ext/flexibleview/convertViewsToMaterializedViews.sql" );
+		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+		
+		sql = readSqlFile( "liquibase/ext/flexibleview/dropViewDependencyGraphTempTable.sql" );
+		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+
+		return sqlList.toArray( new Sql[0] );
+	}
+	
+	private String readSqlFile( String location ) {
 		ClassLoader loader = ConvertViewsIntoMaterializedViewsGenerator.class.getClassLoader();
-		InputStream in = loader.getResourceAsStream( "liquibase/ext/flexibleview/convertViewsToMaterializedViews.sql" );
+		InputStream in = loader.getResourceAsStream( location );
 		StringWriter sw = new StringWriter();
 		Scanner s = new Scanner( in ).useDelimiter( "\\A" );
 		String sql;
@@ -42,8 +61,6 @@ public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGener
 		} else {
 			throw new UnexpectedLiquibaseException( "Could not locate the view conversion SQL." );
 		}
-		RawSqlGenerator rawSqlGen = new RawSqlGenerator();
-		Sql[] sequel = rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null );
-		return sequel;
+		return sql;
 	}
 }

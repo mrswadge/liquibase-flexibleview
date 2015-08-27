@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog 
 	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
-	xmlns:otbo="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:otbo="http://www.liquibase.org/xml/ns/dbchangelog-flex-ext" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext ../../../liquibase/ext/flexibleview/xml/dbchangelog-ext.xsd
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-flex-ext ../../../liquibase/ext/flexibleview/xml/dbchangelog-ext.xsd
 											http://www.liquibase.org/xml/ns/dbchangelog ../../../liquibase/ext/flexibleview/xml/dbchangelog-3.2.xsd">
 
 	<!-- Do not rename tests, these names are fixed for test comparison. -->

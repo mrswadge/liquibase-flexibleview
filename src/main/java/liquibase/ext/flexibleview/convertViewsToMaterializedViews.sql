@@ -1,5 +1,85 @@
 -- set serveroutput on;
-BEGIN
+DECLARE
+  vcount                  NUMBER;
+  existCount              NUMBER;
+  v_query                 VARCHAR2(2000);
+  globalCount             NUMBER;
+  newDependent            VARCHAR2(4000);
+  dependant_created_count NUMBER;
+  allDepCreated           BOOLEAN;
+  testNum                 INTEGER;
+  c                       INT;
+  viewCreated             INTEGER;
+  FUNCTION checkAndCreateDependantView(
+      viewName String)
+    RETURN INTEGER
+  IS
+  BEGIN
+    FOR all_views IN
+    ( SELECT * FROM view_temp WHERE view_name = viewName
+    )
+    LOOP
+      BEGIN
+        SELECT COUNT(*)
+        INTO existCount
+        FROM view_temp
+        WHERE view_name LIKE viewName;
+        IF existCount !=0 THEN
+          BEGIN
+            FOR dependant_names IN
+            (SELECT regexp_substr(all_views.dependant_name,'[^,]+', 1, level) AS dep_name
+            FROM dual
+              CONNECT BY regexp_substr(all_views.dependant_name, '[^,]+', 1, level) IS NOT NULL
+            )
+            LOOP
+              BEGIN
+                IF all_views.total_count > 1 THEN
+                  BEGIN
+                    SELECT COUNT(*)
+                    INTO dependant_created_count
+                    FROM user_objects
+                    WHERE object_name           = dependant_names.dep_name;
+                    IF(dependant_created_count != 0) THEN
+                      BEGIN
+                        allDepCreated :=true;
+                      END;
+                    ELSE
+                      testNum := checkAndCreateDependantView(dependant_names.dep_name);
+                    END IF;
+                  END;
+                ELSE
+                  BEGIN
+                    SELECT COUNT(*)
+                    INTO dependant_created_count
+                    FROM user_objects
+                    WHERE object_name          = dependant_names.dep_name ;
+                    IF dependant_created_count!=0 THEN
+                      BEGIN
+                        SELECT MAX(order_crt_num) INTO globalCount FROM view_temp;
+                        globalCount := globalCount+1;
+                        EXECUTE immediate( 'update view_temp set order_crt_num = ' || globalCount || ' where view_name = '''|| viewName ||'''');
+                      END;
+                    ELSE
+                      testNum:= checkAndCreateDependantView(dependant_names.dep_name);
+                    END IF;
+                  END;
+                END IF;
+              END;
+            END LOOP;
+            IF allDepCreated !=false THEN
+              BEGIN
+                SELECT MAX(order_crt_num) INTO globalCount FROM view_temp;
+                globalCount := globalCount+1;
+                EXECUTE immediate( 'update view_temp set order_crt_num = ' || globalCount || ' where view_name = '''|| viewName ||'''');
+              END;
+            END IF;
+          END;
+        END IF;
+      END;
+    END LOOP;
+    RETURN 1;
+  END checkAndCreateDependantView;
+  BEGIN
   -- Due to bugs in Oracle, this script will only work on:
   -- 11.2.0.3 with patch set 30
   -- 11.2.0.4 with patch set 6 (not yet released)
@@ -10,8 +90,82 @@ BEGIN
   EXECUTE immediate 'ALTER session SET "optimizer_features_enable"  = "11.1.0.7"';
   EXECUTE immediate 'ALTER session SET "_pred_move_around"          = false';
   dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'SQLTERMINATOR', false );
+      FOR cur_rec IN
+    (SELECT object_name,
+      object_type
+    FROM user_objects
+    WHERE object_type  like 'VIEW'
+    ORDER BY object_name
+    )
+    LOOP
+      BEGIN
+        SELECT COUNT(*)
+        INTO vcount
+        FROM user_dependencies
+        WHERE name LIKE cur_rec.object_name
+        AND referenced_type LIKE 'VIEW';
+        IF vcount !=0 THEN
+          FOR cur_view IN
+          (SELECT       *
+          FROM user_dependencies
+          WHERE name LIKE cur_rec.object_name
+          AND referenced_type LIKE 'VIEW'
+          )
+          LOOP
+            BEGIN
+              SELECT COUNT(*)
+              INTO existCount
+              FROM view_temp
+              WHERE view_name LIKE cur_view.name;
+              IF existCount !=0 THEN
+                BEGIN
+                  SELECT dependant_name
+                  INTO newDependent
+                  FROM view_temp
+                  WHERE view_name = cur_rec.object_name;
+                  newDependent   := newDependent || ',' || cur_view.REFERENCED_NAME;
+                  EXECUTE immediate ('update view_temp set dependant_name = ''' || newDependent || ''' where view_name like ''' || cur_view.name || '''');
+                END;
+              ELSE
+                EXECUTE immediate 'insert into view_temp values (''' || cur_rec.object_name || ''' , ''' || cur_view.REFERENCED_NAME || ''','|| vcount || ', 0)' ;
+              END IF;
+            END;
+          END LOOP;
+        ELSE
+          EXECUTE immediate 'insert into view_temp values (''' || cur_rec.object_name || ''' , ''Independent'','|| vcount || ', 0)' ;
+        END IF;
+      END;
+    END LOOP;
+    FOR all_views IN
+    (SELECT * FROM view_temp ORDER BY total_count, view_name ASC
+    )
+    LOOP
+      BEGIN
+        allDepCreated            := false;
+        IF all_views.total_count != 0 THEN
+          BEGIN
+            testNum:= checkAndCreateDependantView(all_views.view_name);
+          END;
+        ELSE
+          BEGIN
+            SELECT MAX(order_crt_num)
+            INTO globalCount
+            FROM view_temp;
+            globalCount := globalCount+1;
+            EXECUTE immediate( 'update view_temp set order_crt_num = ' || globalCount || ' where view_name = '''|| all_views.view_name ||'''');
+          END;
+        END IF;
+      END;
+    END LOOP;
+    FOR final_view IN
+    (SELECT * FROM view_temp ORDER BY order_crt_num
+    )
+    LOOP
+      DBMS_OUTPUT.PUT_LINE('View Name: ' || final_view.view_name || ' , Dependent Name :' || final_view.dependant_name || ' , order created : ' || final_view.order_crt_num );
+    END LOOP;
+  
   FOR cur_rec IN
-  ( SELECT object_name, object_type FROM user_objects WHERE object_type='VIEW'
+  ( SELECT view_name object_name, 'VIEW' object_type FROM view_temp order by order_crt_num
   )
   LOOP
     BEGIN
