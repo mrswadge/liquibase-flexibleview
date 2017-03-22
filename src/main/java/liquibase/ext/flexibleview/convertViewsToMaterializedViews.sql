@@ -170,8 +170,8 @@ DECLARE
   LOOP
     BEGIN
       FOR cur_view IN
-      (SELECT trim( REPLACE( REPLACE( dbms_metadata.get_ddl( 'VIEW', cur_rec.object_name ), 'CREATE OR REPLACE FORCE VIEW', 'CREATE MATERIALIZED VIEW' ), 'CREATE OR REPLACE VIEW', 'CREATE MATERIALIZED VIEW' ) ) "MATERIALIZED_VIEW",
-        trim( dbms_metadata.get_ddl( 'VIEW', cur_rec.object_name ) ) "VIEW"
+      (SELECT trim( REPLACE( REPLACE( dbms_metadata.get_ddl( 'VIEW', cur_rec.object_name, NULL, '11' ), 'CREATE OR REPLACE FORCE VIEW', 'CREATE MATERIALIZED VIEW' ), 'CREATE OR REPLACE VIEW', 'CREATE MATERIALIZED VIEW' ) ) "MATERIALIZED_VIEW",
+        trim( dbms_metadata.get_ddl( 'VIEW', cur_rec.object_name, NULL, '11' ) ) "VIEW"
       FROM dual
       )
       LOOP
