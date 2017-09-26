@@ -5,7 +5,7 @@
 	<version>1.0.0-SNAPSHOT</version>
 
 	<properties>
-		<oracle.version>11.2.0.4</oracle.version>
+		<oracle.version>12.2.1.2.0</oracle.version>
 		<slf4j.version>1.7.5</slf4j.version>
 		<junit.version>4.11</junit.version>
 		<liquibase.core.version>3.2.0-SNAPSHOT</liquibase.core.version>
@@ -46,7 +46,10 @@
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		
-		<!-- Download from http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-112010-090769.html Then install using command line: mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.4.0 -Dpackaging=jar -Dfile=ojdbc6.jar -DgeneratePom=true -->
+		<!-- 
+		Grab from WebLogic 12.2.1.2.0 installation under oracle_common\modules\oracle.jdbc\ojdbc6.jar. 
+		Then install using command line: mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=12.2.1.2.0 -Dpackaging=jar -Dfile=ojdbc6.jar -DgeneratePom=true 
+		-->
 		<dependency>
 			<groupId>com.oracle</groupId>
 			<artifactId>ojdbc6</artifactId>

@@ -38,6 +38,9 @@ public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGener
 		List<Sql> sqlList = new ArrayList<Sql>();
 		RawSqlGenerator rawSqlGen = new RawSqlGenerator();
 		
+		sql = readSqlFile( "liquibase/ext/flexibleview/createViewConversionExcludesTable.sql" );
+		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
+		
 		sql = readSqlFile( "liquibase/ext/flexibleview/createViewDependencyGraphTempTable.sql" );
 		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
 

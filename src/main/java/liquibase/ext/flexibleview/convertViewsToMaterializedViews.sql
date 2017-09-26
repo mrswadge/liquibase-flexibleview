@@ -23,7 +23,7 @@ DECLARE
         SELECT COUNT(*)
         INTO existCount
         FROM view_temp
-        WHERE view_name LIKE viewName;
+        WHERE view_name = viewName;
         IF existCount !=0 THEN
           BEGIN
             FOR dependant_names IN
@@ -91,32 +91,32 @@ DECLARE
   EXECUTE immediate 'ALTER session SET "_pred_move_around"          = false';
   dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'SQLTERMINATOR', false );
       FOR cur_rec IN
-    (SELECT object_name,
-      object_type
-    FROM user_objects
-    WHERE object_type  like 'VIEW'
-    ORDER BY object_name
+    (SELECT o.object_name,
+      o.object_type
+    FROM user_objects o left join mview_conversion_excludes x on o.object_name = x.view_name
+    WHERE o.object_type = 'VIEW' and x.view_name is null
+    ORDER BY o.object_name
     )
     LOOP
       BEGIN
         SELECT COUNT(*)
         INTO vcount
         FROM user_dependencies
-        WHERE name LIKE cur_rec.object_name
-        AND referenced_type LIKE 'VIEW';
+        WHERE name = cur_rec.object_name
+        AND referenced_type = 'VIEW';
         IF vcount !=0 THEN
           FOR cur_view IN
           (SELECT       *
           FROM user_dependencies
-          WHERE name LIKE cur_rec.object_name
-          AND referenced_type LIKE 'VIEW'
+          WHERE name = cur_rec.object_name
+          AND referenced_type = 'VIEW'
           )
           LOOP
             BEGIN
               SELECT COUNT(*)
               INTO existCount
               FROM view_temp
-              WHERE view_name LIKE cur_view.name;
+              WHERE view_name = cur_view.name;
               IF existCount !=0 THEN
                 BEGIN
                   SELECT dependant_name
@@ -124,7 +124,7 @@ DECLARE
                   FROM view_temp
                   WHERE view_name = cur_rec.object_name;
                   newDependent   := newDependent || ',' || cur_view.REFERENCED_NAME;
-                  EXECUTE immediate ('update view_temp set dependant_name = ''' || newDependent || ''' where view_name like ''' || cur_view.name || '''');
+                  EXECUTE immediate ('update view_temp set dependant_name = ''' || newDependent || ''' where view_name = ''' || cur_view.name || '''');
                 END;
               ELSE
                 EXECUTE immediate 'insert into view_temp values (''' || cur_rec.object_name || ''' , ''' || cur_view.REFERENCED_NAME || ''','|| vcount || ', 0)' ;
@@ -157,12 +157,14 @@ DECLARE
         END IF;
       END;
     END LOOP;
+    /*
     FOR final_view IN
     (SELECT * FROM view_temp ORDER BY order_crt_num
     )
     LOOP
-      DBMS_OUTPUT.PUT_LINE('View Name: ' || final_view.view_name || ' , Dependent Name :' || final_view.dependant_name || ' , order created : ' || final_view.order_crt_num );
+      dbms_output.put_line('View Name: ' || final_view.view_name || ' , Dependent Name :' || final_view.dependant_name || ' , order created : ' || final_view.order_crt_num );
     END LOOP;
+    */
   
   FOR cur_rec IN
   ( SELECT view_name object_name, 'VIEW' object_type FROM view_temp order by order_crt_num
@@ -177,6 +179,7 @@ DECLARE
       LOOP
         BEGIN
           BEGIN
+            -- dbms_output.put_line( 'Drop Materialized View: ' || cur_rec.object_name );
             EXECUTE immediate 'drop materialized view ' || cur_rec.object_name;
           EXCEPTION
           WHEN OTHERS THEN
@@ -185,6 +188,7 @@ DECLARE
             END IF;
           END;
           BEGIN
+            -- dbms_output.put_line( 'Drop View: ' || cur_rec.object_name );
             EXECUTE immediate 'drop view ' || cur_rec.object_name;
           EXCEPTION
           WHEN OTHERS THEN
@@ -201,7 +205,6 @@ DECLARE
             BEGIN
               -- dbms_output.put_line( 'Failed to create materialized view, recreating original view ' || cur_rec.object_name );
               -- dbms_output.put_line( 'Error was: ' || sqlerrm( sqlcode ) );
-              -- dbms_output.put_line( cur_view."MATERIALIZED_VIEW" );
               EXECUTE immediate cur_view."VIEW";
             EXCEPTION
             WHEN OTHERS THEN
