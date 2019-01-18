@@ -21,7 +21,7 @@ A build of 3.7.0 snapshot for the core liquibase modules.
 
 Available here: https://github.com/liquibase/liquibase
 
-A build of the Liquibase Oracle extension merged with the 3.2.0 snapshot code. 
+A build of the Liquibase Oracle extension merged with the 3.7.0 snapshot code. 
 
 * /liquibase-oracle
 
