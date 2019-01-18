@@ -11,12 +11,16 @@ import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
+import liquibase.exception.PreconditionErrorException;
+import liquibase.exception.PreconditionFailedException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.exception.ValidationErrors;
 import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewGenerator;
 import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewStatement;
+import liquibase.ext.oracle.preconditions.OracleMaterializedViewExistsPrecondition;
 import liquibase.logging.LogService;
 import liquibase.logging.Logger;
+import liquibase.precondition.core.ViewExistsPrecondition;
 import liquibase.sql.Sql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
 import liquibase.sqlgenerator.core.AbstractSqlGenerator;
@@ -42,30 +46,30 @@ public class DropFlexibleViewGenerator extends AbstractSqlGenerator<DropFlexible
 		JdbcConnection connection = (JdbcConnection) database.getConnection();
 		// check if the view already exists, then formulate a plan from there!
 		
-		FlexibleView existingView = null;
-		
-		ResultSet rs = null;
+		OracleMaterializedViewExistsPrecondition mviewCheck = new OracleMaterializedViewExistsPrecondition();
+		mviewCheck.setViewName( statement.getViewName() );
+		boolean mviewExists = mviewCheck.check( database );
+
+		boolean viewExists = false;
 		try {
-			rs = connection.getMetaData().getTables( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName().toUpperCase(), FlexibleView.getSQLValues() );
-			if ( rs.next() ) {
-				existingView = FlexibleView.deriveByValue( rs.getString( "TABLE_TYPE" ) );
-			}
-		} catch ( DatabaseException e ) {
-			throw new UnexpectedLiquibaseException( "Failed on database view investigation.", e );
-		} catch ( SQLException e ) {
-			throw new UnexpectedLiquibaseException( "Failed on database view investigation.", e );
-		} finally {
-			try { if ( rs != null ) rs.close(); } catch ( Throwable t ) { }
+			ViewExistsPrecondition viewCheck = new ViewExistsPrecondition();
+			viewCheck.setViewName( statement.getViewName() );
+			viewCheck.check( database, null, null, null );
+			viewExists = true;
+		} catch ( PreconditionFailedException e ) {
+			// ignore
+		} catch ( PreconditionErrorException e ) {
+			throw new RuntimeException( e );
 		}
 		
 		List<Sql> sequel = new ArrayList<Sql>();
 		
-		if ( FlexibleView.MATERIALIZED == existingView ) {
+		if ( mviewExists ) {
 			DropMaterializedViewStatement dropMViewStmt = new DropMaterializedViewStatement( statement.getViewName() );
 			dropMViewStmt.setSchemaName( database.getLiquibaseSchemaName() );
 			DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
 			sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
-		} else if ( FlexibleView.VIEW == existingView ) {
+		} else if ( viewExists ) {
 			DropViewStatement dropViewStmt = new DropViewStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName() );
 			DropViewGenerator dropViewGen = new DropViewGenerator();
 			sequel.addAll( Arrays.asList( dropViewGen.generateSql( dropViewStmt, database, null ) ) );

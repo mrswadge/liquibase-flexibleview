@@ -19,11 +19,15 @@ import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
+import liquibase.exception.PreconditionErrorException;
+import liquibase.exception.PreconditionFailedException;
 import liquibase.exception.RollbackFailedException;
 import liquibase.ext.flexibleview.CreateFlexibleViewChange;
 import liquibase.ext.flexibleview.FlexibleView;
 import liquibase.ext.flexibleview.testcore.BaseTestCase;
+import liquibase.ext.oracle.preconditions.OracleMaterializedViewExistsPrecondition;
 import liquibase.parser.ChangeLogParserFactory;
+import liquibase.precondition.core.ViewExistsPrecondition;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import liquibase.sql.Sql;
@@ -44,7 +48,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 		cleanDB();
 	}
 
-	//@Test
+	@Test
 	public void getChangeMetaData() {
 		CreateFlexibleViewChange view = new CreateFlexibleViewChange();
 
@@ -54,7 +58,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 		assertEquals( ChangeMetaData.PRIORITY_DEFAULT, changeFactory.getChangeMetaData( view ).getPriority() );
 	}
 
-	//@Test
+	@Test
 	public void getConfirmationMessage() {
 		final String VIEW_NAME = "myview";
 		CreateFlexibleViewChange view = new CreateFlexibleViewChange();
@@ -64,7 +68,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 		assertEquals( String.format( "Flexible View %s created", VIEW_NAME ), view.getConfirmationMessage() );
 	}
 
-	//@Test
+	@Test
 	public void generateStatement() {
 		CreateFlexibleViewChange view = new CreateFlexibleViewChange();
 		view.setViewName( "myview" );
@@ -99,8 +103,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 		expectedQuery.add( String.format( "Drop materialized view %s.myview4", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview4 AS select 1 as One from dual", database.getLiquibaseSchemaName() ) );
 		//expectedQuery.add( String.format( "Drop materialized view %s.myview3", database.getLiquibaseSchemaName() ) );
-		//expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview3 AS select * from mytable", database.getLiquibaseSchemaName() ) );
-		expectedQuery.add( String.format( "Drop materialized view %s.myview3", database.getLiquibaseSchemaName() ) );
+		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview3 AS select * from mytable", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview3 AS select * from mytable where one like '%%'", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "Drop materialized view %s.myview2", database.getLiquibaseSchemaName() ) );
 
@@ -122,7 +125,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 		}
 	}
 
-	//@Test
+	@Test
 	public void test() throws Exception {
 		liquiBase.update( new Contexts() );
 		
@@ -134,28 +137,36 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 		 * 3. MYVIEW3 to exist as a real-time view.
 		 */
 		
-		ResultSet myview1 = null;
-		ResultSet myview2 = null;
-		ResultSet myview3 = null;
-		ResultSet myview4 = null;
+		assertFalse( viewExists( "MYVIEW1" ) );
+		assertFalse( mviewExists( "MYVIEW1" ) );
 		
-		try {
-			myview1 = connection.getMetaData().getTables( null, null, "MYVIEW1", FlexibleView.getSQLValues() );
-			assertFalse( myview1.next() );
-			
-			myview2 = connection.getMetaData().getTables( null, null, "MYVIEW2", FlexibleView.getSQLValues() );
-			assertTrue( myview2.next() );
-			assertEquals( FlexibleView.MATERIALIZED, FlexibleView.deriveByValue( myview2.getString( "TABLE_TYPE" ) ) );
-			
-			myview3 = connection.getMetaData().getTables( null, null, "MYVIEW3", FlexibleView.getSQLValues() );
-			assertTrue( myview3.next() );
-			assertEquals( FlexibleView.VIEW, FlexibleView.deriveByValue( myview3.getString( "TABLE_TYPE" ) ) );
-
-			myview4 = connection.getMetaData().getTables( null, null, "MYVIEW4", FlexibleView.getSQLValues() );
-			assertFalse( myview4.next() );
-		} finally {
-			closeSilently( myview1, myview2, myview3, myview4 );
-		}
+		assertFalse( viewExists( "MYVIEW2" ) );
+		assertTrue( mviewExists( "MYVIEW2" ) );
+		
+		assertTrue( viewExists( "MYVIEW3" ) );
+		assertFalse( mviewExists( "MYVIEW3" ) );
+		
+		assertFalse( viewExists("MYVIEW4") );
+		assertFalse( mviewExists("MYVIEW4") );
 	}
 
+	private boolean mviewExists(String mviewName) {
+		OracleMaterializedViewExistsPrecondition mviewExists = new OracleMaterializedViewExistsPrecondition();
+		mviewExists.setViewName( mviewName );
+		return mviewExists.check( liquiBase.getDatabase() );
+	}
+
+	private boolean viewExists(String mviewName) {
+		try {
+			ViewExistsPrecondition viewExists = new ViewExistsPrecondition();
+			viewExists.setViewName( mviewName );
+			viewExists.check( liquiBase.getDatabase(), null, null, null );
+			return true;
+		} catch ( PreconditionFailedException e ) {
+			// e.printStackTrace();
+			return false;
+		} catch ( PreconditionErrorException e ) {
+			throw new RuntimeException( e );
+		}
+	}
 }
