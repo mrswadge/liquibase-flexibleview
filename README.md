@@ -9,7 +9,7 @@ Oracle extension that allows conversion of views to materialized views and for m
 
 # Requirements #
 
-A build of 3.2.0 snapshot for the core liquibase modules.
+A build of 3.7.0 snapshot for the core liquibase modules.
 
 * /liquibase
 * /liquibase-cdi
