@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
@@ -12,9 +13,9 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.exception.ValidationErrors;
-import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewOracle;
+import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewGenerator;
 import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewStatement;
-import liquibase.logging.LogFactory;
+import liquibase.logging.LogService;
 import liquibase.logging.Logger;
 import liquibase.sql.Sql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
@@ -24,7 +25,7 @@ import liquibase.statement.core.DropViewStatement;
 
 public class DropFlexibleViewGenerator extends AbstractSqlGenerator<DropFlexibleViewStatement> {
 	
-	private static final Logger log = LogFactory.getLogger();
+	private static final Logger log = LogService.getLog(DropFlexibleViewGenerator.class);
 	
 	@Override
 	public boolean supports( DropFlexibleViewStatement statement, Database database ) {
@@ -62,7 +63,7 @@ public class DropFlexibleViewGenerator extends AbstractSqlGenerator<DropFlexible
 		if ( FlexibleView.MATERIALIZED == existingView ) {
 			DropMaterializedViewStatement dropMViewStmt = new DropMaterializedViewStatement( statement.getViewName() );
 			dropMViewStmt.setSchemaName( database.getLiquibaseSchemaName() );
-			DropMaterializedViewOracle dropMViewGen = new DropMaterializedViewOracle();
+			DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
 			sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
 		} else if ( FlexibleView.VIEW == existingView ) {
 			DropViewStatement dropViewStmt = new DropViewStatement( database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName(), statement.getViewName() );
@@ -72,6 +73,11 @@ public class DropFlexibleViewGenerator extends AbstractSqlGenerator<DropFlexible
 			log.warning( String.format( "The [materialized] view named %s was not found when it was attempted to be dropped from the database.", statement.getViewName() ) );
 		}
 
+		log.info( sequel.stream().map( new java.util.function.Function<Object, String>() {
+			public String apply( Object o ) {
+				return String.valueOf( o );
+			} }  ).collect( Collectors.joining( "\n" ) ) );
+		
 		return sequel.toArray( new Sql[0] );
 	}
 }

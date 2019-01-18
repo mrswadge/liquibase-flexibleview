@@ -3,14 +3,15 @@ package liquibase.ext.flexibleview;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
 import liquibase.exception.ValidationErrors;
-import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewOracle;
+import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewGenerator;
 import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewStatement;
 import liquibase.ext.oracle.preconditions.OracleMaterializedViewExistsPrecondition;
-import liquibase.logging.LogFactory;
+import liquibase.logging.LogService;
 import liquibase.logging.Logger;
 import liquibase.sql.Sql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
@@ -20,7 +21,7 @@ import liquibase.statement.core.CreateViewStatement;
 
 public class CreateFlexibleViewGenerator extends AbstractSqlGenerator<CreateFlexibleViewStatement> {
 	
-	private static final Logger log = LogFactory.getLogger();
+	private static final Logger log = LogService.getLog(CreateFlexibleViewGenerator.class);
 	
 	@Override
 	public boolean supports( CreateFlexibleViewStatement statement, Database database ) {
@@ -50,7 +51,7 @@ public class CreateFlexibleViewGenerator extends AbstractSqlGenerator<CreateFlex
 		if ( matViewExistsCondition.check( database ) ) {
 			DropMaterializedViewStatement dropMViewStmt = new DropMaterializedViewStatement( statement.getViewName() );
 			dropMViewStmt.setSchemaName( database.getLiquibaseSchemaName() );
-			DropMaterializedViewOracle dropMViewGen = new DropMaterializedViewOracle();
+			DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
 			sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
 		}
 		
@@ -59,6 +60,11 @@ public class CreateFlexibleViewGenerator extends AbstractSqlGenerator<CreateFlex
 
 		CreateViewGenerator createViewGen = new CreateViewGenerator();
 		sequel.addAll( Arrays.asList( createViewGen.generateSql( createViewStmt, database, null ) ) );
+
+		log.info( sequel.stream().map( new java.util.function.Function<Object, String>() {
+			public String apply( Object o ) {
+				return String.valueOf( o );
+			} }  ).collect( Collectors.joining( "\n" ) ) );
 
 		return sequel.toArray( new Sql[0] );
 	}

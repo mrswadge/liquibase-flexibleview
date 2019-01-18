@@ -9,7 +9,6 @@ import liquibase.change.ChangeMetaData;
 import liquibase.change.DatabaseChange;
 import liquibase.change.DatabaseChangeProperty;
 import liquibase.database.Database;
-import liquibase.database.core.SQLiteDatabase;
 import liquibase.statement.SqlStatement;
 
 @DatabaseChange(

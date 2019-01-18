@@ -1,0 +1,3 @@
+liquibase.ext.flexibleview.ConvertViewsIntoMaterializedViewsChange
+liquibase.ext.flexibleview.CreateFlexibleViewChange
+liquibase.ext.flexibleview.DropFlexibleViewChange

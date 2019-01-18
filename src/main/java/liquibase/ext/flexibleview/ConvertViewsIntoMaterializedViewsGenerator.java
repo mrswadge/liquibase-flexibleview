@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.exception.ValidationErrors;
-import liquibase.logging.LogFactory;
+import liquibase.logging.LogService;
 import liquibase.logging.Logger;
 import liquibase.sql.Sql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
@@ -21,7 +22,7 @@ import liquibase.statement.core.RawSqlStatement;
 
 public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGenerator<ConvertViewsIntoMaterializedViewsStatement> {
 	
-	private static final Logger log = LogFactory.getLogger();
+	private static final Logger log = LogService.getLog(ConvertViewsIntoMaterializedViewsGenerator.class);
 	
 	@Override
 	public boolean supports( ConvertViewsIntoMaterializedViewsStatement statement, Database database ) {
@@ -50,6 +51,11 @@ public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGener
 		sql = readSqlFile( "liquibase/ext/flexibleview/dropViewDependencyGraphTempTable.sql" );
 		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
 
+		log.info( sqlList.stream().map( new java.util.function.Function<Object, String>() {
+			public String apply( Object o ) {
+				return String.valueOf( o );
+			} }  ).collect( Collectors.joining( "\n" ) ) );
+		
 		return sqlList.toArray( new Sql[0] );
 	}
 	

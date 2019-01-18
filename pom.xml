@@ -5,11 +5,11 @@
 	<version>1.0.0-SNAPSHOT</version>
 
 	<properties>
-		<oracle.version>12.2.1.2.0</oracle.version>
+		<oracle.version>12.2.0.1</oracle.version>
 		<slf4j.version>1.7.5</slf4j.version>
 		<junit.version>4.11</junit.version>
-		<liquibase.core.version>3.2.0-SNAPSHOT</liquibase.core.version>
-		<liquibase.oracle.version>3.2.0-SNAPSHOT</liquibase.oracle.version>
+		<liquibase.core.version>3.7.0-SNAPSHOT</liquibase.core.version>
+		<liquibase.oracle.version>3.3-SNAPSHOT</liquibase.oracle.version>
 	</properties>
 
 	<build>
@@ -47,17 +47,17 @@
 		</dependency>
 		
 		<!-- 
-		Grab from WebLogic 12.2.1.2.0 installation under oracle_common\modules\oracle.jdbc\ojdbc6.jar. 
-		Then install using command line: mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=12.2.1.2.0 -Dpackaging=jar -Dfile=ojdbc6.jar -DgeneratePom=true 
+		Grab from WebLogic 12.2.1.2.0 installation under oracle_common\modules\oracle.jdbc\ojdbc8.jar. 
+		Then install using command line: mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc8 -Dversion=12.2.1.2.0 -Dpackaging=jar -Dfile=ojdbc8.jar -DgeneratePom=true 
 		-->
 		<dependency>
 			<groupId>com.oracle</groupId>
-			<artifactId>ojdbc6</artifactId>
+			<artifactId>ojdbc8</artifactId>
 			<version>${oracle.version}</version>
 			<scope>test</scope>
 <!--
 			<version>12c</version>
-			<systemPath>W:/oracle_common/modules/oracle.jdbc/ojdbc6.jar </systemPath>
+			<systemPath>W:/oracle_common/modules/oracle.jdbc/ojdbc8.jar </systemPath>
 			<scope>system</scope>
 -->
 		</dependency>
