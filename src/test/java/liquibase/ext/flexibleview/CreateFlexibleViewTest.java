@@ -100,9 +100,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview2 AS select * from mytable", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "Drop materialized view %s.myview2", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview2 AS select * from mytable where rownum = 1", database.getLiquibaseSchemaName() ) );
-		expectedQuery.add( String.format( "Drop materialized view %s.myview4", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview4 AS select 1 as One from dual", database.getLiquibaseSchemaName() ) );
-		//expectedQuery.add( String.format( "Drop materialized view %s.myview3", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview3 AS select * from mytable", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "CREATE OR REPLACE VIEW %s.myview3 AS select * from mytable where one like '%%'", database.getLiquibaseSchemaName() ) );
 		expectedQuery.add( String.format( "Drop materialized view %s.myview2", database.getLiquibaseSchemaName() ) );

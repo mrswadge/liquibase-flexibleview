@@ -51,7 +51,7 @@ public class ConvertViewsIntoMaterializedViewsGenerator extends AbstractSqlGener
 		sql = readSqlFile( "liquibase/ext/flexibleview/dropViewDependencyGraphTempTable.sql" );
 		sqlList.addAll( Arrays.asList( rawSqlGen.generateSql( new RawSqlStatement( sql, "" ), database, null ) ) );
 
-		log.info( sqlList.stream().map( new java.util.function.Function<Object, String>() {
+		log.debug( sqlList.stream().map( new java.util.function.Function<Object, String>() {
 			public String apply( Object o ) {
 				return String.valueOf( o );
 			} }  ).collect( Collectors.joining( "\n" ) ) );

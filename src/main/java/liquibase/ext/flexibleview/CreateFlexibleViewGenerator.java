@@ -61,7 +61,7 @@ public class CreateFlexibleViewGenerator extends AbstractSqlGenerator<CreateFlex
 		CreateViewGenerator createViewGen = new CreateViewGenerator();
 		sequel.addAll( Arrays.asList( createViewGen.generateSql( createViewStmt, database, null ) ) );
 
-		log.info( sequel.stream().map( new java.util.function.Function<Object, String>() {
+		log.debug( sequel.stream().map( new java.util.function.Function<Object, String>() {
 			public String apply( Object o ) {
 				return String.valueOf( o );
 			} }  ).collect( Collectors.joining( "\n" ) ) );

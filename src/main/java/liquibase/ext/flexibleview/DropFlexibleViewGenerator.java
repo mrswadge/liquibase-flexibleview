@@ -77,7 +77,7 @@ public class DropFlexibleViewGenerator extends AbstractSqlGenerator<DropFlexible
 			log.warning( String.format( "The [materialized] view named %s was not found when it was attempted to be dropped from the database.", statement.getViewName() ) );
 		}
 
-		log.info( sequel.stream().map( new java.util.function.Function<Object, String>() {
+		log.debug( sequel.stream().map( new java.util.function.Function<Object, String>() {
 			public String apply( Object o ) {
 				return String.valueOf( o );
 			} }  ).collect( Collectors.joining( "\n" ) ) );
