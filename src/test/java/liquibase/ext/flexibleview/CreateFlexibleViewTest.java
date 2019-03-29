@@ -52,7 +52,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 	public void getChangeMetaData() {
 		CreateFlexibleViewChange view = new CreateFlexibleViewChange();
 
-		ChangeFactory changeFactory = Scope.getCurrentScope().getSingleton(ChangeFactory.class);
+		ChangeFactory changeFactory = ChangeFactory.getInstance(); // 3.7 onwards: Scope.getCurrentScope().getSingleton(ChangeFactory.class);
 		assertEquals( "createFlexibleView", changeFactory.getChangeMetaData( view ).getName() );
 		assertEquals( "Create a new database view or materialized view depending on context.", changeFactory.getChangeMetaData( view ).getDescription() );
 		assertEquals( ChangeMetaData.PRIORITY_DEFAULT, changeFactory.getChangeMetaData( view ).getPriority() );
