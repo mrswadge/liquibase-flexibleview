@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import liquibase.database.Database;
+import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.OracleDatabase;
 import liquibase.exception.ValidationErrors;
 import liquibase.ext.ora.dropmaterializedview.DropMaterializedViewGenerator;
@@ -25,7 +26,7 @@ public class CreateFlexibleViewGenerator extends AbstractSqlGenerator<CreateFlex
 	
 	@Override
 	public boolean supports( CreateFlexibleViewStatement statement, Database database ) {
-		return database instanceof OracleDatabase;
+		return database instanceof OracleDatabase || database instanceof MSSQLDatabase;
 	}
 
 	public ValidationErrors validate( CreateFlexibleViewStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain ) {
@@ -46,13 +47,15 @@ public class CreateFlexibleViewGenerator extends AbstractSqlGenerator<CreateFlex
 		String viewName = statement.getViewName().toUpperCase();
 		List<Sql> sequel = new ArrayList<Sql>();
 
-		OracleMaterializedViewExistsPrecondition matViewExistsCondition = new OracleMaterializedViewExistsPrecondition();
-		matViewExistsCondition.setViewName( viewName );
-		if ( matViewExistsCondition.check( database ) ) {
-			DropMaterializedViewStatement dropMViewStmt = new DropMaterializedViewStatement( statement.getViewName() );
-			dropMViewStmt.setSchemaName( database.getLiquibaseSchemaName() );
-			DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
-			sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
+		if ( database instanceof OracleDatabase ) {
+			OracleMaterializedViewExistsPrecondition matViewExistsCondition = new OracleMaterializedViewExistsPrecondition();
+			matViewExistsCondition.setViewName( viewName );
+			if ( matViewExistsCondition.check( database ) ) {
+				DropMaterializedViewStatement dropMViewStmt = new DropMaterializedViewStatement( statement.getViewName() );
+				dropMViewStmt.setSchemaName( database.getLiquibaseSchemaName() );
+				DropMaterializedViewGenerator dropMViewGen = new DropMaterializedViewGenerator();
+				sequel.addAll( Arrays.asList( dropMViewGen.generateSql( dropMViewStmt, database, null ) ) );
+			}
 		}
 		
 		// if the view exists as a regular view already, we don't actually care.

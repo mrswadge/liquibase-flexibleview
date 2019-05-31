@@ -1,19 +1,20 @@
 package liquibase.ext.flexibleview;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import liquibase.Contexts;
 import liquibase.LabelExpression;
-import liquibase.Scope;
 import liquibase.change.Change;
 import liquibase.change.ChangeFactory;
 import liquibase.change.ChangeMetaData;
-import liquibase.changelog.ChangeLogHistoryService;
-import liquibase.changelog.ChangeLogHistoryServiceFactory;
 import liquibase.changelog.ChangeLogParameters;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
@@ -21,9 +22,6 @@ import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
 import liquibase.exception.PreconditionErrorException;
 import liquibase.exception.PreconditionFailedException;
-import liquibase.exception.RollbackFailedException;
-import liquibase.ext.flexibleview.CreateFlexibleViewChange;
-import liquibase.ext.flexibleview.FlexibleView;
 import liquibase.ext.flexibleview.testcore.BaseTestCase;
 import liquibase.ext.oracle.preconditions.OracleMaterializedViewExistsPrecondition;
 import liquibase.parser.ChangeLogParserFactory;
@@ -33,11 +31,6 @@ import liquibase.resource.ResourceAccessor;
 import liquibase.sql.Sql;
 import liquibase.sqlgenerator.SqlGeneratorFactory;
 import liquibase.statement.SqlStatement;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 public class CreateFlexibleViewTest extends BaseTestCase {
 
@@ -52,7 +45,7 @@ public class CreateFlexibleViewTest extends BaseTestCase {
 	public void getChangeMetaData() {
 		CreateFlexibleViewChange view = new CreateFlexibleViewChange();
 
-		ChangeFactory changeFactory = ChangeFactory.getInstance(); // 3.7 onwards: Scope.getCurrentScope().getSingleton(ChangeFactory.class);
+		ChangeFactory changeFactory = ChangeFactory.getInstance(); // 3.7 onwards: liquibase.Scope.getCurrentScope().getSingleton(ChangeFactory.class);
 		assertEquals( "createFlexibleView", changeFactory.getChangeMetaData( view ).getName() );
 		assertEquals( "Create a new database view or materialized view depending on context.", changeFactory.getChangeMetaData( view ).getDescription() );
 		assertEquals( ChangeMetaData.PRIORITY_DEFAULT, changeFactory.getChangeMetaData( view ).getPriority() );
